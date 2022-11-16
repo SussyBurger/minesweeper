@@ -1,14 +1,11 @@
-/* --Tiles Status-- */
-
+/* --- Tiles Status --- */
     export const TILE_STATUS = {
         HIDDEN  : 'hidden',
         MINE    : 'mine',
         NUMBER  : 'number',
         MARKED  : 'marked',
     }
-
-/* ----- */
-
+/* -------------------- */
 
 /* --Creating a board-- */
 
@@ -20,10 +17,10 @@
             const row = [];
             for(let y = 0; y < boardSize; y++) {
                 const element = document.createElement('div');
-                //Set default status for tile
+                //Set default status for cell
                 element.dataset.status = TILE_STATUS.HIDDEN
 
-                const tile = {
+                const cell = {
                     element,
                     x,
                     y,
@@ -36,7 +33,7 @@
                     }
                 }
 
-                row.push(tile)
+                row.push(cell)
             }
             board.push(row)        
         }
@@ -46,8 +43,7 @@
 
 /* ----- */
 
-/* --Place mines-- */
-
+/* --- Generate mines --- */
     function getMinePositions(boardSize, numberOfMines) {
         const positions = []
         while ( positions.length < numberOfMines ) {
@@ -69,51 +65,80 @@
     function randomNumber(size) {
         return Math.floor(Math.random() * size)
     }
+/* -------------------- */
 
-/* ----- */
-
-/* --Flagged tile on rightclick-- */
-
-    export function markTile(tile) {
-        if (tile.status !== TILE_STATUS.HIDDEN && 
-            tile.status !== TILE_STATUS.MARKED) {
+/* --- Flagged cell on rightclick --- */
+    export function flaggedCell(cell) {
+        if (cell.status !== TILE_STATUS.HIDDEN && 
+            cell.status !== TILE_STATUS.MARKED) {
                 return
         }
-        //Unmark the tile
-        if (tile.status === TILE_STATUS.MARKED) {
-            tile.status = TILE_STATUS.HIDDEN
+        //Unmark the cell
+        if (cell.status === TILE_STATUS.MARKED) {
+            cell.status = TILE_STATUS.HIDDEN
         } else {
-            tile.status = TILE_STATUS.MARKED
+            cell.status = TILE_STATUS.MARKED
         }
     }
+/* ------------------------------ */
 
-/* ----- */
-
-/* --Reveal tile onclick-- */
-export function revealTile(board, tile) {
-    if (tile.status !== TILE_STATUS.HIDDEN) {
+/* --- Reveal cell onclick --- */
+export function revealTile(board, cell) {
+    if (cell.status !== TILE_STATUS.HIDDEN) {
         return
     } else 
 
-    if (tile.mine) {
-        tile.status = TILE_STATUS.MINE
+    if (cell.mine) {
+        cell.status = TILE_STATUS.MINE
+        cell.element.textContent = "💣"
         return
     }
 
-    tile.status = TILE_STATUS.NUMBER
-    const adjacentTiles = nearbyTiles(board, tile)
-
+    cell.status = TILE_STATUS.NUMBER
+    const adjacentTiles = nearbyTiles(board, cell)
+    const mines = adjacentTiles.filter( t => t.mine)
+    //Reveal all blank cell and adjacent
+    if (mines.length === 0) {    
+        adjacentTiles.forEach(revealTile.bind(null, board))
+    } else 
+        { 
+            cell.element.textContent = mines.length
+        }
 }
 
-function nearbyTiles(board, tile) {
+function nearbyTiles(board, {x ,y}) {
+    const tiles = []
 
+    for (let xOffset = -1; xOffset <= 1; xOffset++) {
+        for (let yOffset = -1; yOffset <= 1; yOffset++) {
+            const cell = board[x + xOffset]?.[y + yOffset]
+            if (cell) tiles.push(cell)
+        }
+    }
+
+    return tiles
 }
 
 /* ----- */
 
-/* --Reveal tile onclick-- */
+/* --- Game Result --- */
+    export function checkWin(board) {
+        return board.every(row => {
+            return row.every(cell => {
+                return cell.status === TILE_STATUS.NUMBER ||
+                (cell.mine && (
+                    cell.status === TILE_STATUS.HIDDEN ||
+                    cell.status === TILE_STATUS.MARKED
+                    ))
+            })
+        })
+    }
 
-    export function checkLose() {}
-    export function checkWin() {}
-    
-/* ----- */
+    export function checkLose(board) {
+        return board.some(row => {
+            return row.some(cell => {
+                return cell.status === TILE_STATUS.MINE
+            })
+        })
+    } 
+/* ------------------- */

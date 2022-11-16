@@ -37,7 +37,7 @@ body {
     justify-content: center;
     align-items: center;
     color: white;
-    border: 2px solid silver;
+    border: 2px solid rgb(153, 102, 51);
 }
 
 .board-layout > [data-status = "hidden"] {
